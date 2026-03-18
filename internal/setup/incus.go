@@ -41,6 +41,11 @@ func newIncusManager() IncusManager {
 	return realIncusManager{}
 }
 
+type remoteTrustClient interface {
+	GetServer() (*api.Server, string, error)
+	CreateCertificate(api.CertificatesPost) error
+}
+
 func BootstrapLocalLinuxServer(ctx context.Context) error {
 	return newIncusManager().BootstrapServer(ctx, "", "")
 }
@@ -131,12 +136,41 @@ func (realIncusManager) AddRemote(_ context.Context, remoteName, address, token 
 		return fmt.Errorf("connecting to the Incus remote %q: %w", remoteName, err)
 	}
 
-	if err := server.CreateCertificate(api.CertificatesPost{TrustToken: token}); err != nil {
-		return fmt.Errorf("trusting the local client with the remote Incus server: %w", err)
+	if err := ensureRemoteTrusted(server, token); err != nil {
+		return err
 	}
 
 	if err := saveIncusConfig(conf, configPath); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func ensureRemoteTrusted(server remoteTrustClient, token string) error {
+	serverInfo, _, err := server.GetServer()
+	if err != nil {
+		return fmt.Errorf("querying the Incus remote before trusting the local client: %w", err)
+	}
+
+	if serverInfo.Auth == "trusted" {
+		return nil
+	}
+
+	if err := server.CreateCertificate(api.CertificatesPost{
+		CertificatePut: api.CertificatePut{Type: api.CertificateTypeClient},
+		TrustToken:     token,
+	}); err != nil {
+		return fmt.Errorf("trusting the local client with the remote Incus server: %w", err)
+	}
+
+	serverInfo, _, err = server.GetServer()
+	if err != nil {
+		return fmt.Errorf("querying the Incus remote after trusting the local client: %w", err)
+	}
+
+	if serverInfo.Auth != "trusted" {
+		return errors.New("the Incus server does not trust the local client after applying the trust token")
 	}
 
 	return nil
