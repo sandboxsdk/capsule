@@ -21,3 +21,27 @@ jobs:
 
       - name: Run format, lint, and tests
         run: make check
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run local Docker install e2e
+        run: ./scripts/e2e.sh ci
+
+      - name: Upload e2e logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs
+          path: /tmp/capsule-e2e-local/logs
+          if-no-files-found: ignore

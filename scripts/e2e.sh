@@ -24,10 +24,11 @@ COLOR_RESET=$'\033[0m'
 
 usage() {
   cat <<'EOF'
-Usage: scripts/e2e.sh [run|up|install|verify|down]
+Usage: scripts/e2e.sh [run|ci|up|install|verify|down]
 
 Commands:
   run      Build artifacts, start the Docker environment, launch the installer, then verify Incus.
+  ci       Build artifacts, run the installer with default remote answers, then verify Incus.
   up       Build artifacts and start the Docker environment.
   install  Run the interactive install script inside capsule-client.
   verify   Launch an Alpine container through Incus from capsule-client and run incus ls on capsule-server.
@@ -42,6 +43,7 @@ Environment overrides:
   CAPSULE_E2E_SERVER_IMAGE         Docker image tag for the server image
   CAPSULE_E2E_CLIENT_HTTP_PORT     Local HTTP port inside capsule-client used for the release asset
   CAPSULE_E2E_VERIFY_CONTAINER_NAME Incus instance name used during verification
+  CAPSULE_E2E_SETUP_INPUT          Non-interactive setup answers with \\n escapes (default: option 2 + root@capsule-server)
 EOF
 }
 
@@ -455,6 +457,37 @@ install() {
     bash -lc "cd /workspace && ./scripts/install.sh"
 }
 
+noninteractive_setup_input() {
+  if [[ -n "${CAPSULE_E2E_SETUP_INPUT:-}" ]]; then
+    printf '%b' "$CAPSULE_E2E_SETUP_INPUT"
+    return
+  fi
+
+  printf '2\nroot@%s\n' "$SERVER_NAME"
+}
+
+install_ci() {
+  local version
+
+  docker_container_running "$CLIENT_NAME" || fail "$CLIENT_NAME is not running; run '$0 up' first"
+  docker_container_running "$SERVER_NAME" || fail "$SERVER_NAME is not running; run '$0 up' first"
+
+  version="$(release_version)"
+  ensure_release_http_server
+
+  printf '\n'
+  printf 'Connect to the server using:\n'
+  printf '  ssh root@%s\n\n' "$SERVER_NAME"
+
+  noninteractive_setup_input | docker exec -i \
+    -e CAPSULE_INSTALL_URL="http://127.0.0.1:$CLIENT_HTTP_PORT" \
+    -e CAPSULE_INSTALL_VERSION="$version" \
+    -e CAPSULE_INSTALL_BIN_DIR="/usr/local/bin" \
+    -e CAPSULE_INSTALL_NO_TTY="1" \
+    "$CLIENT_NAME" \
+    bash -lc "cd /workspace && ./scripts/install.sh"
+}
+
 verify() {
   docker_container_running "$CLIENT_NAME" || fail "$CLIENT_NAME is not running; run '$0 up' first"
   docker_container_running "$SERVER_NAME" || fail "$SERVER_NAME is not running; run '$0 up' first"
@@ -499,6 +532,11 @@ main() {
     run)
       up
       install
+      verify
+      ;;
+    ci)
+      up
+      install_ci
       verify
       ;;
     up)

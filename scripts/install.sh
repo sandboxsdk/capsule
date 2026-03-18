@@ -8,6 +8,7 @@ ASSET_PREFIX="${CAPSULE_INSTALL_ASSET_PREFIX:-capsule}"
 ARCHIVE_NAME_OVERRIDE="${CAPSULE_INSTALL_ARCHIVE_NAME:-}"
 CHECKSUM_NAME_OVERRIDE="${CAPSULE_INSTALL_CHECKSUM_NAME:-}"
 BIN_NAME="${CAPSULE_INSTALL_BIN_NAME:-capsule}"
+NO_TTY="${CAPSULE_INSTALL_NO_TTY:-}"
 
 SPINNER_CHARS='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
 SPINNER_PID=""
@@ -89,6 +90,7 @@ Environment variables:
   CAPSULE_INSTALL_CHECKSUM_NAME Override the full checksum filename
   CAPSULE_INSTALL_BIN_NAME      Override the binary name inside the archive
   CAPSULE_INSTALL_BIN_DIR       Override the install directory
+  CAPSULE_INSTALL_NO_TTY        Skip reattaching setup to /dev/tty (useful for CI)
 EOF
 }
 
@@ -325,7 +327,7 @@ run_setup() {
     err "Installed binary is not executable: $setup_bin"
   fi
 
-  if [ -r /dev/tty ] && [ -w /dev/tty ]; then
+  if [ "$NO_TTY" != "1" ] && [ -r /dev/tty ] && [ -w /dev/tty ]; then
     exec "$setup_bin" setup </dev/tty >/dev/tty 2>/dev/tty
   fi
 
