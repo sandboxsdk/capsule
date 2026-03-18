@@ -80,7 +80,6 @@ func TestRunRemoteInstallsServerAndAddsRemote(t *testing.T) {
 		selectChoices: []int{1},
 		askAnswers: []string{
 			"root@198.51.100.10",
-			"198.51.100.10",
 		},
 	}
 
@@ -152,8 +151,8 @@ func TestRunRemoteInstallsServerAndAddsRemote(t *testing.T) {
 	}) {
 		t.Fatalf("unexpected trust token calls: %+v", incus.trustTokenCalls)
 	}
-	if len(prompt.askQuestions) != 2 {
-		t.Fatalf("expected 2 prompts, got %d", len(prompt.askQuestions))
+	if len(prompt.askQuestions) != 1 {
+		t.Fatalf("expected 1 prompt, got %d", len(prompt.askQuestions))
 	}
 	if !strings.Contains(prompt.askQuestions[0], "root@203.0.113.10") {
 		t.Fatalf("expected SSH target prompt to include an example, got %q", prompt.askQuestions[0])
@@ -170,7 +169,6 @@ func TestRunRemotePromptsForRemoteNameWhenCapsuleExists(t *testing.T) {
 		selectChoices: []int{1},
 		askAnswers: []string{
 			"root@198.51.100.10",
-			"198.51.100.10",
 			"lab",
 		},
 	}
@@ -218,8 +216,8 @@ func TestRunRemotePromptsForRemoteNameWhenCapsuleExists(t *testing.T) {
 	if len(incus.addRemoteCalls) != 1 || incus.addRemoteCalls[0].remoteName != "lab" {
 		t.Fatalf("expected alternate remote add call, got %+v", incus.addRemoteCalls)
 	}
-	if prompt.askDefaults[2] != "capsule-198-51-100-10" {
-		t.Fatalf("expected alternate remote name suggestion, got %q", prompt.askDefaults[2])
+	if prompt.askDefaults[1] != "capsule-198-51-100-10" {
+		t.Fatalf("expected alternate remote name suggestion, got %q", prompt.askDefaults[1])
 	}
 }
 
@@ -230,7 +228,6 @@ func TestRunRemoteSuggestsNextAvailableRemoteNameWhenFallbackExists(t *testing.T
 		selectChoices: []int{1},
 		askAnswers: []string{
 			"root@198.51.100.10",
-			"198.51.100.10",
 			"",
 		},
 	}
@@ -279,8 +276,8 @@ func TestRunRemoteSuggestsNextAvailableRemoteNameWhenFallbackExists(t *testing.T
 	if len(incus.addRemoteCalls) != 1 || incus.addRemoteCalls[0].remoteName != "capsule-198-51-100-10-2" {
 		t.Fatalf("expected next available remote name, got %+v", incus.addRemoteCalls)
 	}
-	if prompt.askDefaults[2] != "capsule-198-51-100-10-2" {
-		t.Fatalf("expected next available remote name suggestion, got %q", prompt.askDefaults[2])
+	if prompt.askDefaults[1] != "capsule-198-51-100-10-2" {
+		t.Fatalf("expected next available remote name suggestion, got %q", prompt.askDefaults[1])
 	}
 }
 

@@ -101,13 +101,10 @@ func (s *Service) runRemote(ctx context.Context) error {
 	}
 
 	defaultAddress := extractHostFromSSHTarget(target)
-	remoteAddress, err := s.prompt.Ask("Address the Incus API should use", defaultAddress)
-	if err != nil {
-		return err
-	}
-	if strings.TrimSpace(remoteAddress) == "" {
+	if strings.TrimSpace(defaultAddress) == "" {
 		return fmt.Errorf("the remote address is required")
 	}
+	remoteAddress := defaultAddress
 
 	remoteName, err := s.chooseRemoteName(ctx, defaultAddress)
 	if err != nil {
