@@ -555,10 +555,38 @@ verify() {
   container_cmd exec "$CLIENT_NAME" bash -lc '
 set -euo pipefail
 name="'"$VERIFY_CONTAINER_NAME"'"
+launch_output=""
+
+launch_instance() {
+  local image="$1"
+  shift
+
+  local status
+  set +e
+  launch_output="$(incus launch "$image" "$name" "$@" 2>&1)"
+  status=$?
+  set -e
+
+  return "$status"
+}
+
 for image in images:alpine/3.20 images:alpine/3.19 images:alpine/edge; do
-  if incus launch "$image" "$name"; then
+  if launch_instance "$image"; then
+    printf "%s\n" "$launch_output"
     exit 0
   fi
+
+  printf "%s\n" "$launch_output" >&2
+  if [[ "$launch_output" == *idmap* ]]; then
+    echo "Retrying with security.privileged=true because nested idmap delegation is unavailable" >&2
+    incus delete -f "$name" >/dev/null 2>&1 || true
+    if launch_instance "$image" -c security.privileged=true; then
+      printf "%s\n" "$launch_output"
+      exit 0
+    fi
+  fi
+
+  incus delete -f "$name" >/dev/null 2>&1 || true
 done
 echo "unable to launch an Alpine image from the default images remote" >&2
 exit 1

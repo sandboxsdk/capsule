@@ -200,6 +200,8 @@ if [[ "$MODE" != "server" ]]; then
   exit 0
 fi
 
+run_step "Installing uidmap helpers" apt-get install -y uidmap
+
 TARGET_USER="${SUDO_USER:-${USER:-root}}"
 run_step "Starting the Incus service" enable_incus_service
 run_step "Waiting for the Incus socket" wait_for_incus
