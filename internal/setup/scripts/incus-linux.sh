@@ -5,6 +5,7 @@ MODE="server"
 LOG_DIR=""
 SPINNER_PID=""
 SPINNER_MSG=""
+SPINNER_FRAMES=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
 
 CYAN=$'\033[36m'
 GREEN=$'\033[32m'
@@ -27,12 +28,11 @@ start_spinner() {
   fi
 
   (
-    local frames=('|' '/' '-' '\')
     local index=0
     while true; do
-      printf '\r%s%s%s %s ' "$CYAN" "${frames[index]}" "$RESET" "$SPINNER_MSG"
+      printf '\r%s%s%s %s ' "$CYAN" "${SPINNER_FRAMES[index]}" "$RESET" "$SPINNER_MSG"
       sleep 0.1
-      index=$(( (index + 1) % ${#frames[@]} ))
+      index=$(( (index + 1) % ${#SPINNER_FRAMES[@]} ))
     done
   ) &
   SPINNER_PID=$!
@@ -51,12 +51,12 @@ stop_spinner() {
 
 step_done() {
   stop_spinner
-  printf '%s[ok]%s %s\n' "$GREEN" "$RESET" "$1"
+  printf '%s✓%s %s\n' "$GREEN" "$RESET" "$1"
 }
 
 step_fail() {
   stop_spinner
-  printf '%s[x]%s %s\n' "$RED" "$RESET" "$1" >&2
+  printf '%s✗%s %s\n' "$RED" "$RESET" "$1" >&2
 }
 
 run_step() {

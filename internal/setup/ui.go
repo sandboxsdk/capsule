@@ -15,7 +15,7 @@ const (
 	colorReset = "\033[0m"
 )
 
-var spinnerFrames = []string{"|", "/", "-", `\`}
+var spinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 
 type taskUI struct {
 	out        io.Writer
@@ -50,14 +50,14 @@ func (ui taskUI) Run(message string, task func() (string, error)) error {
 
 func (ui taskUI) finish(message, logs string, err error) error {
 	if err != nil {
-		fmt.Fprintf(ui.out, "%s[x]%s %s\n", colorRed, colorReset, message)
+		fmt.Fprintf(ui.out, "%s✗%s %s\n", colorRed, colorReset, message)
 		if logs = strings.TrimSpace(logs); logs != "" {
 			fmt.Fprintln(ui.out, logs)
 		}
 		return err
 	}
 
-	fmt.Fprintf(ui.out, "%s[ok]%s %s\n", colorGreen, colorReset, message)
+	fmt.Fprintf(ui.out, "%s✓%s %s\n", colorGreen, colorReset, message)
 	return nil
 }
 
