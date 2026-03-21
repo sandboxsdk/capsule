@@ -178,7 +178,7 @@ func (s *Service) runRemote(ctx context.Context) error {
 		return fmt.Errorf("switching the default Incus remote to %q: %w", remoteName, err)
 	}
 
-	fmt.Fprintf(s.out, "Remote Incus setup finished. Use %s: as the remote prefix.\n", remoteName)
+	fmt.Fprintf(s.out, "Remote setup finished. Use capsule incus to interact with %s.\n", remoteName)
 	return nil
 }
 
@@ -233,6 +233,14 @@ func (s *Service) setupLocalDarwin(ctx context.Context) error {
 	}
 
 	fmt.Fprintln(s.out, "No local Incus server detected, starting Colima with the Incus runtime...")
+	incusEnv, err := CapsuleIncusEnv()
+	if err != nil {
+		return err
+	}
+
+	colimaEnv := append([]string{}, incusEnv...)
+	colimaEnv = append(colimaEnv, "COLIMA_PROFILE=capsule")
+
 	if _, err := s.runCommandStep(ctx, "Starting Colima with the Incus runtime", CommandSpec{
 		Name: "colima",
 		Args: []string{
@@ -246,7 +254,7 @@ func (s *Service) setupLocalDarwin(ctx context.Context) error {
 			"--nested-virtualization",
 			"--vm-type", "vz",
 		},
-		Env: []string{"COLIMA_PROFILE=capsule"},
+		Env: colimaEnv,
 	}); err != nil {
 		return fmt.Errorf("starting Colima: %w", err)
 	}

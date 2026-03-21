@@ -44,6 +44,9 @@ func TestSetupLocalDarwinStartsColimaWhenServerIsMissing(t *testing.T) {
 	if !runner.calledWithEnv("colima start --activate false --port-forwarder none --mount none --runtime incus --cpu 4 --memory 8 --nested-virtualization --vm-type vz", "COLIMA_PROFILE=capsule") {
 		t.Fatal("expected Colima start to set COLIMA_PROFILE=capsule")
 	}
+	if !runner.calledWithEnvPrefix("colima start --activate false --port-forwarder none --mount none --runtime incus --cpu 4 --memory 8 --nested-virtualization --vm-type vz", "INCUS_CONF=") {
+		t.Fatal("expected Colima start to set INCUS_CONF to Capsule's Incus profile")
+	}
 }
 
 func TestSetupLocalDarwinSkipsColimaWhenServerIsReachable(t *testing.T) {
@@ -531,6 +534,23 @@ func (f *fakeRunner) calledWithEnv(command, env string) bool {
 
 		for _, entry := range spec.Env {
 			if entry == env {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (f *fakeRunner) calledWithEnvPrefix(command, prefix string) bool {
+	for _, spec := range f.specs {
+		key := strings.Join(append([]string{spec.Name}, spec.Args...), " ")
+		if key != command {
+			continue
+		}
+
+		for _, entry := range spec.Env {
+			if strings.HasPrefix(entry, prefix) {
 				return true
 			}
 		}

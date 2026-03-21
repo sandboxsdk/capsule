@@ -51,7 +51,7 @@ func BootstrapLocalLinuxServer(ctx context.Context) error {
 }
 
 func (realIncusManager) ConfiguredServerStatus(_ context.Context) (IncusStatus, error) {
-	conf, _, err := loadIncusConfig()
+	conf, _, err := loadCapsuleIncusConfig()
 	if err != nil {
 		return IncusStatus{}, err
 	}
@@ -78,7 +78,7 @@ func (realIncusManager) ConfiguredServerStatus(_ context.Context) (IncusStatus, 
 }
 
 func (realIncusManager) HasRemote(_ context.Context, remoteName string) (bool, error) {
-	conf, _, err := loadIncusConfig()
+	conf, _, err := loadCapsuleIncusConfig()
 	if err != nil {
 		return false, err
 	}
@@ -88,7 +88,7 @@ func (realIncusManager) HasRemote(_ context.Context, remoteName string) (bool, e
 }
 
 func (realIncusManager) AddRemote(_ context.Context, remoteName, address, token string) error {
-	conf, configPath, err := loadIncusConfig()
+	conf, configPath, err := loadCapsuleIncusConfig()
 	if err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func ensureRemoteTrusted(server remoteTrustClient, token string) error {
 }
 
 func (realIncusManager) VerifyRemote(_ context.Context, remoteName string) error {
-	conf, _, err := loadIncusConfig()
+	conf, _, err := loadCapsuleIncusConfig()
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (realIncusManager) VerifyRemote(_ context.Context, remoteName string) error
 }
 
 func (realIncusManager) SwitchRemote(_ context.Context, remoteName string) error {
-	conf, configPath, err := loadIncusConfig()
+	conf, configPath, err := loadCapsuleIncusConfig()
 	if err != nil {
 		return err
 	}
@@ -322,13 +322,28 @@ func (realIncusManager) CreateTrustToken(ctx context.Context, socketPath, client
 	return token, nil
 }
 
-func loadIncusConfig() (*cliconfig.Config, string, error) {
+func loadSystemIncusConfig() (*cliconfig.Config, string, error) {
 	conf, err := cliconfig.LoadConfig("")
 	if err != nil {
 		return nil, "", fmt.Errorf("loading the Incus client configuration: %w", err)
 	}
 
 	configPath := filepath.Join(conf.ConfigDir, "config.yml")
+	return conf, configPath, nil
+}
+
+func loadCapsuleIncusConfig() (*cliconfig.Config, string, error) {
+	configDir, err := CapsuleIncusConfigDir()
+	if err != nil {
+		return nil, "", err
+	}
+
+	configPath := filepath.Join(configDir, "config.yml")
+	conf, err := cliconfig.LoadConfig(configPath)
+	if err != nil {
+		return nil, "", fmt.Errorf("loading the Capsule Incus client configuration: %w", err)
+	}
+
 	return conf, configPath, nil
 }
 

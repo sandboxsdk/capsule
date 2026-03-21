@@ -3,6 +3,7 @@
 ## Live Testing
 
 - When setup or installer changes need end-to-end validation, use Hetzner Cloud and provision two fresh `cx23` servers in an EU location: one client and one server.
+- For live client-to-server setup tests, provision or install a dedicated SSH key on the client VM and authorize that key on the server VM before running `capsule setup`.
 - Prefer testing the pushed and released build when the public installer path is part of the change.
 
 ## Remote Execution

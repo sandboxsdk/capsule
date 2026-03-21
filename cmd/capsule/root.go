@@ -31,6 +31,7 @@ func newRootCommand(d deps) *cobra.Command {
 	)
 
 	root.AddCommand(
+		newIncusCommand(d),
 		newSetupCommand(d),
 		newVersionCommand(d),
 		newBootstrapCommand(),

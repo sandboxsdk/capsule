@@ -32,7 +32,7 @@ Commands:
   ci       Build artifacts, run the installer with default remote answers, then verify Incus.
   up       Build artifacts and start the container environment.
   install  Run the interactive install script inside capsule-client.
-  verify   Launch an Alpine container through Incus from capsule-client and run incus ls on capsule-server.
+  verify   Launch an Alpine container through Capsule's Incus wrapper from capsule-client and run incus ls on capsule-server.
   down     Remove the containers and network created by this script.
 
 Environment overrides:
@@ -550,8 +550,8 @@ verify() {
   container_running "$CLIENT_NAME" || fail "$CLIENT_NAME is not running; run '$0 up' first"
   container_running "$SERVER_NAME" || fail "$SERVER_NAME is not running; run '$0 up' first"
 
-  log "launching a lightweight Alpine instance via the configured Incus remote"
-  container_cmd exec "$CLIENT_NAME" bash -lc "incus delete -f $VERIFY_CONTAINER_NAME >/dev/null 2>&1 || true"
+  log "launching a lightweight Alpine instance via the configured Capsule Incus remote"
+  container_cmd exec "$CLIENT_NAME" bash -lc "capsule incus delete -f $VERIFY_CONTAINER_NAME >/dev/null 2>&1 || true"
   container_cmd exec "$CLIENT_NAME" bash -lc '
 set -euo pipefail
 name="'"$VERIFY_CONTAINER_NAME"'"
@@ -563,7 +563,7 @@ launch_instance() {
 
   local status
   set +e
-  launch_output="$(incus launch "$image" "$name" "$@" 2>&1)"
+  launch_output="$(capsule incus launch "$image" "$name" "$@" 2>&1)"
   status=$?
   set -e
 
@@ -579,14 +579,14 @@ for image in images:alpine/3.20 images:alpine/3.19 images:alpine/edge; do
   printf "%s\n" "$launch_output" >&2
   if [[ "$launch_output" == *idmap* ]]; then
     echo "Retrying with security.privileged=true because nested idmap delegation is unavailable" >&2
-    incus delete -f "$name" >/dev/null 2>&1 || true
+    capsule incus delete -f "$name" >/dev/null 2>&1 || true
     if launch_instance "$image" -c security.privileged=true; then
       printf "%s\n" "$launch_output"
       exit 0
     fi
   fi
 
-  incus delete -f "$name" >/dev/null 2>&1 || true
+  capsule incus delete -f "$name" >/dev/null 2>&1 || true
 done
 echo "unable to launch an Alpine image from the default images remote" >&2
 exit 1
