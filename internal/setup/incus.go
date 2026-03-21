@@ -322,16 +322,6 @@ func (realIncusManager) CreateTrustToken(ctx context.Context, socketPath, client
 	return token, nil
 }
 
-func loadSystemIncusConfig() (*cliconfig.Config, string, error) {
-	conf, err := cliconfig.LoadConfig("")
-	if err != nil {
-		return nil, "", fmt.Errorf("loading the Incus client configuration: %w", err)
-	}
-
-	configPath := filepath.Join(conf.ConfigDir, "config.yml")
-	return conf, configPath, nil
-}
-
 func loadCapsuleIncusConfig() (*cliconfig.Config, string, error) {
 	configDir, err := CapsuleIncusConfigDir()
 	if err != nil {
