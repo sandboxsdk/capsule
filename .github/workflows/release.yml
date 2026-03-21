@@ -40,7 +40,7 @@ jobs:
             archive="capsule_${version}_${goos}_${goarch}.tar.gz"
 
             GOOS="${goos}" GOARCH="${goarch}" CGO_ENABLED=0 \
-              go build -trimpath -ldflags="-s -w" -o "${workdir}/capsule" ./cmd/capsule
+              go build -trimpath -ldflags="-s -w -X github.com/sandboxsdk/capsule/internal/version.Version=${version}" -o "${workdir}/capsule" ./cmd/capsule
 
             tar -C "${workdir}" -czf "dist/${archive}" capsule
           done
